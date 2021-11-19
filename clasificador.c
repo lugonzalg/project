@@ -4,65 +4,6 @@
 #include <string.h>
 #include <fcntl.h>
 
-//La funcion recolector basicamente se dedica a recoger los datos scoped, por eso las varias llamadas a la funcion en el main. 
-char	*recolector(int fd, char *data);
-char	*ft_strjoin(char *s1, char *s2);
-char	*ft_substr(char	*str, int start, int len);
-
-//estructura de los datos solicitados.
-typedef struct	s_datos {
-	char	*perfil;
-	char	*lenguaje;
-	char	*foto;
-	char	*seguidores;
-	char	*seguidos;
-	char	*publicaciones;
-	char	*puntuados_total;
-	char	*compras_total;
-	char	*puntuacion;
-	char	*fecha;
-} t_datos;
-
-/*ft_substr es una funcion que se encarga de cortar el contenido de una cadena desde el punto start hasta el punto len, esto nos permite devolver el dato exacto que queremos para cada caso*/
-char	*ft_substr(char	*str, int start, int len)
-{
-	int	i;
-	char	*result;
-
-	if (!str)
-		return (NULL);
-	i = 0;
-	if (!(result = (char *)malloc(len + 1)))
-		return (NULL);
-	while (i + start < len && i + start < strlen(str))
-	{
-		result[i] = str[start + i];
-		i++;
-	}
-	result[i] = 0;
-	return (result);
-}
-
-/*ft_strjoin es la funcion que se encarga de concatenar el contenido de la cadena 1 a la cadena 2, lo cual se usa para poder rellenar full con toda la informacion de buffer al momento de ir leyendo*/
-char	*ft_strjoin(char *s1, char *s2)
-{
-	char	*result;
-	int	i;
-
-	if (!(result = (char *)malloc((strlen(s1) + strlen(s2) + 1))))
-		return (NULL);
-	i = 0;
-	if (s1)
-	{
-		while (*s1)
-			result[i++] = *s1++;
-	}
-	while (*s2 != 0)
-		result[i++] = *s2++;
-	result[i] = 0;
-	return (result);
-}
-
 /*la funcion recolector se encarga de recibir tanto el file descriptor de archivo a leer como el dato que se quiere extraer, lee todo el archivo y lo almacena en la variable full, que mas tarde se inspecciona en profundidad para poder obtener la informacion necesaria, para lo cual uso la funcion substr */
 char 	*recolector(int fd, char *data)
 {
@@ -118,12 +59,11 @@ char 	*recolector(int fd, char *data)
 	return (reference);
 }
 
-int	main()
+static void	set_data(t_datos *datos)
 {
-	/* Ah, y lukas, no consigo hacer que full entre vacio la priemera vez, quiero evitar que si tiene algun contenido no pase por el bucle, pero no lo consigo, he usado if (!full) para la primera vez (ahora borrado) y no me iba */
 	int	fd;
-	t_datos	datos;
 
+	ft_memset(datos, 0, sizeof(t_datos));
 	fd = open("response.txt", O_RDONLY);
 	datos.perfil = recolector(fd, "alias");
 	datos.lenguaje = recolector(fd, "language");
@@ -135,13 +75,11 @@ int	main()
 	datos.publicaciones = recolector(fd, "purchase_order_count");
 	datos.puntuacion = recolector(fd, "rating");
 	datos.fecha = recolector(fd, "created_at"); 
-	
-	printf("Perfil: %s\nLenguaje: %s\nFoto: %s\nSeguidores: %s\nSeguidos: %s\nPuntuados: %s\nPublicaciones: %s\nCompras: %s\nPuntuacion: %s\nFecha: %s", datos.perfil, datos.lenguaje, datos.foto, datos.seguidores, datos.seguidos, datos.puntuados_total, datos.compras_total, datos.publicaciones, datos.puntuacion, datos.fecha); 
 
-/*aqui habria que realizar una operacion que pasara estos datos a MariaDB, tras lo que se deberian igualar a NULL las variables de la estructura y hacer una recursiva sobre el propio main mientras que haya algo que leer.*/
+}
 
-	//QUE ESTA PENDIENTE LUKAS, QUE YA SE QUE ESOS FREES DAN CRINGE//
-	
+static void	free_data(t_datos *datos)
+{
 	free(datos.perfil);
 	free(datos.lenguaje);
 	free(datos.foto);
@@ -152,5 +90,19 @@ int	main()
 	free(datos.compras_total);
 	free(datos.publicaciones);
 	free(datos.fecha);
+}
+
+int	main()
+{
+	/* Ah, y lukas, no consigo hacer que full entre vacio la priemera vez, quiero evitar que si tiene algun contenido no pase por el bucle, pero no lo consigo, he usado if (!full) para la primera vez (ahora borrado) y no me iba */
+	t_datos	datos;
+
+	set_data(&datos);
+	printf("Perfil: %s\nLenguaje: %s\nFoto: %s\nSeguidores: %s\nSeguidos: %s\nPuntuados: %s\nPublicaciones: %s\nCompras: %s\nPuntuacion: %s\nFecha: %s", datos.perfil, datos.lenguaje, datos.foto, datos.seguidores, datos.seguidos, datos.puntuados_total, datos.compras_total, datos.publicaciones, datos.puntuacion, datos.fecha); 
+
+/*aqui habria que realizar una operacion que pasara estos datos a MariaDB, tras lo que se deberian igualar a NULL las variables de la estructura y hacer una recursiva sobre el propio main mientras que haya algo que leer.*/
+
+	//QUE ESTA PENDIENTE LUKAS, QUE YA SE QUE ESOS FREES DAN CRINGE//
+	
 	return (0);
 }
