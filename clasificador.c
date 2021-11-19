@@ -10,15 +10,17 @@ char 	*recolector(int fd, char *data)
 	int		bytes;
 	char 		*buffer; 
 	char		*full; 
-	int		size = 2047; //los bytes que leere cada pasada, para llegar cuanto antes al final del archivo
+	int		size;
 	int		i; //i y j son contadores que uso para definir los limites de output
 	int		j;
 	char		*reference;
 
 	if (fd < 0 || fd == 2)
-		exit (1);
-	if (!(buffer = malloc(size + 1)))
-		exit (1);
+		return (NULL);
+	buffer = ft_calloc(sizeof(char), size + 1);
+	if (!buffer)
+		return (NULL);
+	size = 2047; //los bytes que leere cada pasada, para llegar cuanto antes al final del archivo
 	bytes = 1;
 	while (bytes > 0)	//relleno la variable full con todo el archivo
 	{
