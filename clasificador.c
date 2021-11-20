@@ -3,108 +3,90 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include "get_next_line.h"
+#include "libft.h"
+#include "clasificador.h"
 
 /*la funcion recolector se encarga de recibir tanto el file descriptor de archivo a leer como el dato que se quiere extraer, lee todo el archivo y lo almacena en la variable full, que mas tarde se inspecciona en profundidad para poder obtener la informacion necesaria, para lo cual uso la funcion substr */
-char 	*recolector(int fd, char *data)
+static char	*get_text(int fd)
 {
-	int		bytes;
-	char 		*buffer; 
-	char		*full; 
-	int		size;
-	int		i; //i y j son contadores que uso para definir los limites de output
-	int		j;
-	char		*reference;
+	char		*raw_text;
 
 	if (fd < 0 || fd == 2)
 		return (NULL);
-	buffer = ft_calloc(sizeof(char), size + 1);
-	if (!buffer)
+	raw_text = get_next_line(fd);
+	if (!raw_text)
 		return (NULL);
-	size = 2047; //los bytes que leere cada pasada, para llegar cuanto antes al final del archivo
-	bytes = 1;
-	while (bytes > 0)	//relleno la variable full con todo el archivo
-	{
-		bytes = read(fd, buffer, size);
-		buffer[bytes] = 0;
-		full = ft_strjoin(full, buffer);
-	}
-	free(buffer);
-	i = -1;
-	reference = strstr(full, data); //busco la palabra que corresponde al dato que estamos buscando
-	i = 0;
-	while (reference[i] != ':')
+	return (raw_text);
+}
+
+static char	*get_data(char *raw_ptr, char *data)
+{
+	char	*reference;
+	char	*tmp;
+	size_t	i;
+
+	raw_ptr = ft_strnstr(raw_ptr, data, 2048);
+	raw_ptr = ft_strchr(raw_ptr, ':');
+	i = 1;
+	while (raw_ptr[i] && raw_ptr[i] != ',')
 		i++;
-	j = 0; 
-/* Cada dato tiene sus propias limitaciones en cuanto a simbolos o letras, por lo que he tenido que personalizar la recogida de datos en funcion del dato introducido en funcion de si es un numero o una cadena de caracteres. La fecha y las compras del usuario tienen una condicion especial, puesto que sus limites y display son diferentes de las demas */
-	if (data != "followers_count" || data != "followings_count" || data != "reviews_count" || data != "rating")
-	{
-		while (reference[j] != '"')
-			j++;
-	}
-	if(data == "created_at")
-	{
-		while (reference[j] != 'T')
-			j++;
-	}
-	j++;
-	if (data != "created_at" && data != "publicaciones")
-	{
-		while (reference[j] != ',')
-			j++;
-	}
-	if (data == "created_at")
-		reference = ft_substr(reference, i + 2, j - 1);	//caso especial en caso de que estemos recogiendo la fecha
-	else if (data == "purchase_order_count")
-		reference = ft_substr(reference, i + 1, j - 1); //caso especial en caso de que estemos recogiendo el numero de compras realizadas por el usuario
-	else
-		reference = ft_substr(reference, i + 1, j);
-	return (reference);
+	reference = ft_substr(raw_ptr, 0, i);
+	tmp = ft_strtrim(reference, "\":,}");
+	free(reference);
+	raw_ptr += i;
+	return (tmp);
 }
 
 static void	set_data(t_datos *datos)
 {
 	int	fd;
+	char	*raw_text;
+	char	*raw_ptr;
 
 	ft_memset(datos, 0, sizeof(t_datos));
 	fd = open("response.txt", O_RDONLY);
-	datos.perfil = recolector(fd, "alias");
-	datos.lenguaje = recolector(fd, "language");
-	datos.foto = recolector(fd, "location");
-	datos.seguidores = recolector(fd, "followers_count");
-	datos.seguidos = recolector(fd, "followings_count");
-	datos.puntuados_total = recolector(fd, "ratings_count");
-	datos.compras_total = recolector(fd, "reviews_count");
-	datos.publicaciones = recolector(fd, "purchase_order_count");
-	datos.puntuacion = recolector(fd, "rating");
-	datos.fecha = recolector(fd, "created_at"); 
-
+	raw_text = get_text(fd);
+	raw_ptr = raw_text;
+	if (!raw_text)
+		return ;
+	datos->puntuacion = get_data(raw_ptr, "rating");
+	datos->lenguaje = get_data(raw_ptr, "language");
+	datos->fecha = get_data(raw_ptr, "created_at"); 
+	datos->perfil = get_data(raw_ptr, "alias");
+	datos->foto = get_data(raw_ptr, "location");
+	datos->seguidores = get_data(raw_ptr, "followers_count");
+	datos->seguidos = get_data(raw_ptr, "followings_count");
+	datos->puntuados_total = get_data(raw_ptr, "ratings_count");
+	datos->compras_total = get_data(raw_ptr, "reviews_count");
+	datos->publicaciones = get_data(raw_ptr, "purchase_order_count");
 }
 
 static void	free_data(t_datos *datos)
 {
-	free(datos.perfil);
-	free(datos.lenguaje);
-	free(datos.foto);
-	free(datos.lenguaje);
-	free(datos.seguidores);
-	free(datos.seguidos);
-	free(datos.puntuados_total);
-	free(datos.compras_total);
-	free(datos.publicaciones);
-	free(datos.fecha);
+	free(datos->perfil);
+	free(datos->lenguaje);
+	free(datos->foto);
+	free(datos->lenguaje);
+	free(datos->seguidores);
+	free(datos->seguidos);
+	free(datos->puntuados_total);
+	free(datos->compras_total);
+	free(datos->publicaciones);
+	free(datos->fecha);
 }
 
 int	main()
 {
-	/* Ah, y lukas, no consigo hacer que full entre vacio la priemera vez, quiero evitar que si tiene algun contenido no pase por el bucle, pero no lo consigo, he usado if (!full) para la primera vez (ahora borrado) y no me iba */
 	t_datos	datos;
 
 	set_data(&datos);
-	printf("Perfil: %s\nLenguaje: %s\nFoto: %s\nSeguidores: %s\nSeguidos: %s\nPuntuados: %s\nPublicaciones: %s\nCompras: %s\nPuntuacion: %s\nFecha: %s", datos.perfil, datos.lenguaje, datos.foto, datos.seguidores, datos.seguidos, datos.puntuados_total, datos.compras_total, datos.publicaciones, datos.puntuacion, datos.fecha); 
-
+	free_data(&datos);
+	//Connect to MarioDB
 /*aqui habria que realizar una operacion que pasara estos datos a MariaDB, tras lo que se deberian igualar a NULL las variables de la estructura y hacer una recursiva sobre el propio main mientras que haya algo que leer.*/
 
 	//QUE ESTA PENDIENTE LUKAS, QUE YA SE QUE ESOS FREES DAN CRINGE//
 	
 	return (0);
 }
+	//printf("Perfil: %s\nLenguaje: %s\nFoto: %s\nSeguidores: %s\nSeguidos: %s\nPuntuados: %s\nPublicaciones: %s\nCompras: %s\nPuntuacion: %s\nFecha: %s", datos.perfil, datos.lenguaje, datos.foto, datos.seguidores, datos.seguidos, datos.puntuados_total, datos.compras_total, datos.publicaciones, datos.puntuacion, datos.fecha); 

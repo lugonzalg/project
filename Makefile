@@ -7,8 +7,6 @@ LIB= -L . -lft
 INC= -I ${PWD}/libft/inc
 
 FILES= clasificador \
-       clasificador_copia
-
 
 SRC = $(addsuffix .c, $(FILES))
 OBJ = $(addsuffix .o, $(FILES))

@@ -1,7 +1,6 @@
 #ifndef	CLASIFICADOR_H
 #define	CLASIFICADOR_H
 
-
 //estructura de los datos solicitados.
 typedef struct	s_datos {
 	char	*perfil;
