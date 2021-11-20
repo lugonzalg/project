@@ -1,7 +1,8 @@
 #ifndef	CLASIFICADOR_H
 #define	CLASIFICADOR_H
 
-//estructura de los datos solicitados.
+//modified by: Lukas González Ortega glukas94@gmail.com
+//
 typedef struct	s_datos {
 	char	*perfil;
 	char	*lenguaje;

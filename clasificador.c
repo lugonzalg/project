@@ -1,22 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
 #include <fcntl.h>
 #include "get_next_line.h"
 #include "libft.h"
 #include "clasificador.h"
 
-/*la funcion recolector se encarga de recibir tanto el file descriptor de archivo a leer como el dato que se quiere extraer, lee todo el archivo y lo almacena en la variable full, que mas tarde se inspecciona en profundidad para poder obtener la informacion necesaria, para lo cual uso la funcion substr */
 static char	*get_text(char *file)
 {
 	char	*raw_text;
+	char	*tmp;
 	int		fd;
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0 || fd == 2)
 		return (NULL);
 	raw_text = get_next_line(fd);
+	tmp = get_next_line(fd);
+	if (tmp)
+		free(tmp);
 	if (!raw_text)
 		return (NULL);
 	return (raw_text);
@@ -89,11 +90,12 @@ int	main(int argc, char *argv[])
 		if (!raw_ptr)
 			break ;
 		fd = fopen("list.csv", "a");
-		fprintf(fd, "%s %s %s %s %s %s %s %s %s %s\n", d.puntuacion, d.lenguaje, d.fecha, d.perfil, d.foto, d.seguidores, d.seguidos, d.puntuados_total, d.compras_total, d.publicaciones);
+		fprintf(fd, "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", d.puntuacion, d.lenguaje, d.fecha, d.perfil,
+				d.foto, d.seguidores, d.seguidos, d.puntuados_total, d.compras_total,
+				d.publicaciones);
 		fclose(fd);
 		free_data(&d);
 	}
 	free(raw_text);
 	return (0);
 }
-	//printf("Perfil: %s\nLenguaje: %s\nFoto: %s\nSeguidores: %s\nSeguidos: %s\nPuntuados: %s\nPublicaciones: %s\nCompras: %s\nPuntuacion: %s\nFecha: %s", datos.perfil, datos.lenguaje, datos.foto, datos.seguidores, datos.seguidos, datos.puntuados_total, datos.compras_total, datos.publicaciones, datos.puntuacion, datos.fecha); 
