@@ -28,6 +28,7 @@ clean:
 fclean: clean
 	${MAKE} -C ${PWD}/libft/. fclean
 	$(RM) $(NAME)
+	$(RM) libft.a
 
 re: fclean all
 
